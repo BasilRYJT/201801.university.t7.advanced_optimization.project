@@ -15,7 +15,7 @@ def getProgress(i, j, n):
     else:
         pos = i*(n-1) + j - 1
     total = float(fac(n)/fac(n-2))
-    percentage = round(pos/total, 2)
+    percentage = round(100*pos/total, 2)
     return "[ "+str(percentage)+"% ]"
 
 def getUNIXTime(h,m=0):
@@ -32,7 +32,7 @@ def parseAPI(params,dataset,i,j):
     r = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json",params=params)
     if r.status_code != 200:
         print(params)
-        raise Exception(" Request FAILURE. status code: "+str(r.status_code)+" ; location: "+str(i)+","+str(j))
+        raise PermissionError(" Request FAILURE. status code: "+str(r.status_code)+" ; location: "+str(i)+","+str(j))
     else:
         print(">>> Request SUCCESS")
         try:
@@ -41,7 +41,7 @@ def parseAPI(params,dataset,i,j):
             for k in range(len(data)):
                 if data[k]["status"] == "OK":
                     output = deepcopy(ori)
-                    output += ","+str(dataset["name"][j-len(data)+k])
+                    output += ","+str(dataset["name"][j])
                     output += ","+str(data[k]["distance"]["text"])
                     output += ","+str(data[k]["distance"]["value"])
                     output += ","+str(data[k]["duration"]["text"])
@@ -54,6 +54,7 @@ def parseAPI(params,dataset,i,j):
                         out_file.write(ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
                     print(getProgress(i,j,dataset.shape[0])+" FAILED: "+ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
         except IndexError:
+            print(r.json())
             raise PermissionError("OVER_QUERY_LIMIT")
         print(">>> Parser END")
             
@@ -62,7 +63,7 @@ def main(ori=0,des=0):
     import pandas as pd
     from keyGen.token import getToken
     dataset = pd.read_csv("./data/hawker_location.csv", dtype="str")
-    apiKey = getToken("Te76tgkVJftylWM")
+    apiKey = getToken("O02Yca8VtprI1Zs")
     deptime = str(int(getUNIXTime(12)))
     params = {
             "origins":"",
@@ -92,4 +93,28 @@ def main(ori=0,des=0):
             parseAPI(params,dataset,i,j)
     print("########## END SCRIPT ##########")
                                          
-main()
+
+def correctErrors():
+    import pandas as pd
+    from keyGen.token import getToken
+    dataset = pd.read_csv("./data/hawker_location.csv", dtype="str")
+    error = pd.read_csv("./output/20180220_noon_errors.csv")
+    apiKey = getToken("Te76tgkVJftylWM")
+    deptime = str(int(getUNIXTime(12)))
+    params = {
+            "origins":"",
+            "destinations":"",
+            "key":apiKey,
+            "mode":"transit",
+            "departure_time":deptime
+            }
+    print("########## START SCRIPT ##########")
+    ithList = error["ith"].tolist()
+    jthList = error["jth"].tolist()
+    for i in range(error.shape[0]):
+        params["origins"] = dataset["lat"][ithList[i]]+","+dataset["lon"][ithList[i]]
+        params["destinations"] = dataset["lat"][jthList[i]]+","+dataset["lon"][jthList[i]]
+        parseAPI(params,dataset,ithList[i],jthList[i])
+    print("########## END SCRIPT ##########")
+          
+correctErrors()
