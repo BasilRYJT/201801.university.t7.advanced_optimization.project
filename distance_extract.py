@@ -30,27 +30,31 @@ def parseAPI(params,dataset,i,j):
     print(">>> Parser BEGIN")
     print(">>> Request BEGIN")
     r = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json",params=params)
-    if r.status_code() != 200:
-        raise Exception(" Request FAILURE. status code: "+str(r.status_code())+" ; location: "+str(i)+","+str(j))
+    if r.status_code != 200:
+        print(params)
+        raise Exception(" Request FAILURE. status code: "+str(r.status_code)+" ; location: "+str(i)+","+str(j))
     else:
         print(">>> Request SUCCESS")
-        data = r.json()["rows"][0]["elements"]
-        ori = str(dataset["name"][i])
-        for k in range(len(data)):
-            if data[k]["status"] == "OK":
-                output = deepcopy(ori)
-                output += ","+str(dataset["name"][j])
-                output += ","+str(data[k]["distance"]["text"])
-                output += ","+str(data[k]["distance"]["value"])
-                output += ","+str(data[k]["duration"]["text"])
-                output += ","+str(data[k]["duration"]["value"])        
-                with open("./output/20180220_noon.csv","a") as out_file:
-                    out_file.write(output+"\n")
-                print(getProgress(i,j,dataset.shape[0])+" "+output)
-            else:
-                with open("./output/20180220_faillog.csv","a") as out_file:
-                    out_file.write(ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
-                print(getProgress(i,j,dataset.shape[0])+" FAILED: "+ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
+        try:
+            data = r.json()["rows"][0]["elements"]
+            ori = str(dataset["name"][i])
+            for k in range(len(data)):
+                if data[k]["status"] == "OK":
+                    output = deepcopy(ori)
+                    output += ","+str(dataset["name"][j-len(data)+k])
+                    output += ","+str(data[k]["distance"]["text"])
+                    output += ","+str(data[k]["distance"]["value"])
+                    output += ","+str(data[k]["duration"]["text"])
+                    output += ","+str(data[k]["duration"]["value"])        
+                    with open("./output/20180220_noon.csv","a") as out_file:
+                        out_file.write(output+"\n")
+                    print(getProgress(i,j,dataset.shape[0])+" "+output)
+                else:
+                    with open("./output/20180220_faillog.csv","a") as out_file:
+                        out_file.write(ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
+                    print(getProgress(i,j,dataset.shape[0])+" FAILED: "+ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
+        except IndexError:
+            raise PermissionError("OVER_QUERY_LIMIT")
         print(">>> Parser END")
             
 
@@ -59,7 +63,7 @@ def main(ori=0,des=0):
     from keyGen.token import getToken
     dataset = pd.read_csv("./data/hawker_location.csv", dtype="str")
     apiKey = getToken("Te76tgkVJftylWM")
-    deptime = getUNIXTime(12)
+    deptime = str(int(getUNIXTime(12)))
     params = {
             "origins":"",
             "destinations":"",
