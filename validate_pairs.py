@@ -11,6 +11,7 @@ def checkFile(filename):
     count = 0
     with open("./output/"+filename[:-4]+"_errors.csv","a") as out_file:
         print(">>> Check BEGIN")
+        out_file.write("ori,des,ind_ori,ind_des")
         for ori in locList:
             subset = dataset.loc[dataset["ori"]==ori,:]
             for des in locList:

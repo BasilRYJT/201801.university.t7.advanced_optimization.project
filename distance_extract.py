@@ -18,10 +18,10 @@ def getProgress(i, j, n):
     percentage = round(100*pos/total, 2)
     return "[ "+str(percentage)+"% ]"
 
-def getUNIXTime(h,m=0):
+def getUNIXTime(hm):
     from datetime import datetime
     from time import mktime
-    raw = datetime(2018,2,20,h,m,0)
+    raw = datetime(2018,2,20,hm[0],hm[1],0)
     return mktime(raw.timetuple())
 
 def parseAPI(params,dataset,i,j):
@@ -59,12 +59,12 @@ def parseAPI(params,dataset,i,j):
         print(">>> Parser END")
             
 
-def main(ori=0,des=0):
+def main(filename,tokenKey,time=(12,0),ori=0,des=0):
     import pandas as pd
     from keyGen.token import getToken
     dataset = pd.read_csv("./data/hawker_location.csv", dtype="str")
     apiKey = getToken("O02Yca8VtprI1Zs")
-    deptime = str(int(getUNIXTime(12)))
+    deptime = str(int(getUNIXTime(time)))
     params = {
             "origins":"",
             "destinations":"",
@@ -77,7 +77,11 @@ def main(ori=0,des=0):
         params["origins"] = dataset["lat"][i]+","+dataset["lon"][i]
         eleCount = 0
         destEle = ""
-        for j in range(des,dataset.shape[0]):
+        if i == ori:
+            start = des
+        else:
+            start = 0
+        for j in range(start,dataset.shape[0]):
             if i != j:
                 eleCount += 1
                 destEle += dataset["lat"][j]+","+dataset["lon"][j]+"|"
@@ -94,12 +98,12 @@ def main(ori=0,des=0):
     print("########## END SCRIPT ##########")
                                          
 
-def correctErrors():
+def correctErrors(filename,tokenKey):
     import pandas as pd
     from keyGen.token import getToken
     dataset = pd.read_csv("./data/hawker_location.csv", dtype="str")
-    error = pd.read_csv("./output/20180220_noon_errors.csv")
-    apiKey = getToken("Te76tgkVJftylWM")
+    error = pd.read_csv("./output/%s"%filename)
+    apiKey = getToken(tokenKey)
     deptime = str(int(getUNIXTime(12)))
     params = {
             "origins":"",
@@ -117,4 +121,4 @@ def correctErrors():
         parseAPI(params,dataset,ithList[i],jthList[i])
     print("########## END SCRIPT ##########")
           
-correctErrors()
+def temporal

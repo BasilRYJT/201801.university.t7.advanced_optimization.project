@@ -10,8 +10,9 @@ def convertCSV(filename):
     dataset = pd.read_csv("./output/"+filename)
     print(">>> Import SUCCESS")
     locList = dataset["ori"].unique().tolist()
-    indList = [base64.urlsafe_b64encode(hashlib.md5(loc.encode("utf-8")).digest()).decode("utf-8") for loc in locList]
-    indDict = {base64.urlsafe_b64encode(hashlib.md5(loc.encode("utf-8")).digest()).decode("utf-8"):loc for loc in locList}
+    indList = [base64.urlsafe_b64encode(hashlib.md5(loc.encode("utf-8")).digest()).decode("utf-8").replace("=","A").replace("-","B") for loc in locList]
+    indDict = {base64.urlsafe_b64encode(hashlib.md5(loc.encode("utf-8")).digest()).decode("utf-8").replace("=","A").replace("-","B"):loc for loc in locList}
+    print(indList)
     with open("./output/%sdat"%filename[:-3],"a") as out_file:
         print(">>> Parser BEGIN")
         out_file.write("data;\n\nset VER := ")
