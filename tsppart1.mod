@@ -1,5 +1,6 @@
 set VER ordered; #vertices
 set EDG:= {i in VER,j in VER: i != j}; # edges 
+set EDG ordered;
 param weight{EDG} >=0; # weights
 var X{EDG} binary;
 

@@ -21,10 +21,10 @@ def getProgress(i, j, n):
 def getUNIXTime(hm):
     from datetime import datetime
     from time import mktime
-    raw = datetime(2018,2,20,hm[0],hm[1],0)
+    raw = datetime(2018,3,8,hm[0],hm[1],0)
     return mktime(raw.timetuple())
 
-def parseAPI(params,dataset,i,j):
+def parseAPI(params,dataset,i,j,time=None):
     import requests
     from copy import deepcopy
     print(">>> Parser BEGIN")
@@ -41,62 +41,27 @@ def parseAPI(params,dataset,i,j):
             for k in range(len(data)):
                 if data[k]["status"] == "OK":
                     output = deepcopy(ori)
-                    output += ","+str(dataset["name"][j])
+                    if (j-len(data)+k) < i:
+                        output += ","+str(dataset["name"][j-len(data)+k])
+                    else:
+                        output += ","+str(dataset["name"][j+1-len(data)+k])
                     output += ","+str(data[k]["distance"]["text"])
                     output += ","+str(data[k]["distance"]["value"])
                     output += ","+str(data[k]["duration"]["text"])
-                    output += ","+str(data[k]["duration"]["value"])        
-                    with open("./output/20180220_noon.csv","a") as out_file:
+                    output += ","+str(data[k]["duration"]["value"])
+                    if time:
+                        output += ",%s:%s"%time
+                    with open("./output/20180308_time.csv","a") as out_file:
                         out_file.write(output+"\n")
                     print(getProgress(i,j,dataset.shape[0])+" "+output)
                 else:
-                    with open("./output/20180220_faillog.csv","a") as out_file:
+                    with open("./output/20180308_faillog.csv","a") as out_file:
                         out_file.write(ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
                     print(getProgress(i,j,dataset.shape[0])+" FAILED: "+ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
         except IndexError:
             print(r.json())
             raise PermissionError("OVER_QUERY_LIMIT")
         print(">>> Parser END")
-            
-
-def main(filename,tokenKey,time=(12,0),ori=0,des=0):
-    import pandas as pd
-    from keyGen.token import getToken
-    dataset = pd.read_csv("./data/hawker_location.csv", dtype="str")
-    apiKey = getToken("O02Yca8VtprI1Zs")
-    deptime = str(int(getUNIXTime(time)))
-    params = {
-            "origins":"",
-            "destinations":"",
-            "key":apiKey,
-            "mode":"transit",
-            "departure_time":deptime
-            }
-    print("########## START SCRIPT ##########")
-    for i in range(ori,dataset.shape[0]):
-        params["origins"] = dataset["lat"][i]+","+dataset["lon"][i]
-        eleCount = 0
-        destEle = ""
-        if i == ori:
-            start = des
-        else:
-            start = 0
-        for j in range(start,dataset.shape[0]):
-            if i != j:
-                eleCount += 1
-                destEle += dataset["lat"][j]+","+dataset["lon"][j]+"|"
-                if eleCount >= 25:
-                    destEle = destEle[:-1]
-                    params["destinations"] = destEle
-                    parseAPI(params,dataset,i,j)
-                    eleCount = 0
-                    destEle = ""
-        if eleCount > 0:
-            destEle = destEle[:-1]
-            params["destinations"] = destEle
-            parseAPI(params,dataset,i,j)
-    print("########## END SCRIPT ##########")
-                                         
 
 def correctErrors(filename,tokenKey):
     import pandas as pd
@@ -121,4 +86,67 @@ def correctErrors(filename,tokenKey):
         parseAPI(params,dataset,ithList[i],jthList[i])
     print("########## END SCRIPT ##########")
           
-def temporal
+def main(filename,tokenKey,timeList=[(12,0)],ori=0,des=0):
+    import pandas as pd
+    from keyGen.token import getToken
+    dataset = pd.read_csv("./data/%s" % filename, dtype="str")
+    apiKey = getToken(tokenKey)
+    print("########## START SCRIPT ##########")
+    for time in timeList:
+        deptime = str(int(getUNIXTime(time)))
+        print(">>> Get TIME: %s:%s" % time)
+        params = {
+                "origins":"",
+                "destinations":"",
+                "key":apiKey,
+                "mode":"transit",
+                "departure_time":deptime
+                }
+        for i in range(ori,dataset.shape[0]):
+            params["origins"] = dataset["lat"][i]+","+dataset["lon"][i]
+            eleCount = 0
+            destEle = ""
+            if i == ori:
+                start = des
+            else:
+                start = 0
+            for j in range(start,dataset.shape[0]):
+                if i != j:
+                    eleCount += 1
+                    destEle += dataset["lat"][j]+","+dataset["lon"][j]+"|"
+                    if eleCount >= 25:
+                        destEle = destEle[:-1]
+                        params["destinations"] = destEle
+                        parseAPI(params,dataset,i,j,time)
+                        eleCount = 0
+                        destEle = ""
+            if eleCount > 0:
+                destEle = destEle[:-1]
+                params["destinations"] = destEle
+                parseAPI(params,dataset,i,dataset.shape[0]-1,time)
+    print("########## END SCRIPT ##########")
+          
+def getTimeList(start, end, inter=30):
+    timeList = []
+    hr = start[0]
+    mn = start[1]
+    timeList.append((hr, mn))
+    duration = (end[0]*60+end[1]) - (start[0]*60+start[1])
+    if duration < 0:
+        raise ValueError("Start Time is later than End Time.")
+    for i in range(duration//inter):
+        mn += inter
+        if mn >= 60:
+            mn -= 60
+            hr += 1
+        timeList.append((hr, mn))
+    if duration%inter:
+        mn += duration%inter
+        if mn >= 60:
+            mn -= 60
+            hr += 1
+        timeList.append((hr, mn))
+    return timeList
+
+timeList = getTimeList((20,0),(21,0))
+main("hawker_location.act5.11.csv","Jkdso71YjuVV9ZN",timeList=timeList)
