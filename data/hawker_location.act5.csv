@@ -1,4 +1,4 @@
-﻿id5,name,lon,lat
+id5,name,lon,lat
 ID_00002,Tiong Bahru Market,103.8323488,1.285088258
 ID_00004,Chinatown Market,103.8431776,1.282235148
 ID_00031,Golden Mile Food Centre,103.8638832,1.302875481
@@ -10,3 +10,4 @@ ID_00082,Amoy Street Food Centre,103.8466068,1.279218443
 ID_00093,Blk 51 Old Airport Road,103.8858332,1.308251563
 ID_00100,Blk 85 Bedok North Street 4,103.9387326,1.331987069
 ID_00116,Singapore University of Technology and Design (SUTD),103.962949,1.340257
+ID_00117,Bugis MRT,103.856115,1.301099

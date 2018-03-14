@@ -51,11 +51,11 @@ def parseAPI(params,dataset,i,j,time=None):
                     output += ","+str(data[k]["duration"]["value"])
                     if time:
                         output += ",%s:%s"%time
-                    with open("./output/20180308_time.csv","a") as out_file:
+                    with open("./output/20180308_time.12.csv","a") as out_file:
                         out_file.write(output+"\n")
                     print(getProgress(i,j,dataset.shape[0])+" "+output)
                 else:
-                    with open("./output/20180308_faillog.csv","a") as out_file:
+                    with open("./output/20180308_faillog.12.csv","a") as out_file:
                         out_file.write(ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
                     print(getProgress(i,j,dataset.shape[0])+" FAILED: "+ori+","+str(dataset["name"][j])+","+str(i)+","+str(j))
         except IndexError:
@@ -148,5 +148,5 @@ def getTimeList(start, end, inter=30):
         timeList.append((hr, mn))
     return timeList
 
-timeList = getTimeList((20,0),(21,0))
-main("hawker_location.act5.11.csv","Jkdso71YjuVV9ZN",timeList=timeList)
+timeList = getTimeList((17,0),(21,0))
+main("hawker_location.act5.csv","ek8cyqTVUfHzwdA",timeList=timeList)
